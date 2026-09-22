@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Geoportal InSAR SAOCOM</title>
+
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="./css/styles.css"
+    >
+
+</head>
+
+
+<body>
+
+<div id="app">
+
+    <aside id="sidebar">
+
+        <h1>Monitoreo InSAR</h1>
+
+        <p>SAOCOM · Desplazamiento LOS</p>
+
+
+        <label for="volcanSelect">
+            Volcán
+        </label>
+
+        <select id="volcanSelect">
+        </select>
+
+
+        <label for="fechaSelect">
+            Fecha
+        </label>
+
+        <select id="fechaSelect">
+        </select>
+
+
+        <label for="fechaSlider">
+            Serie temporal
+        </label>
+
+        <input
+            id="fechaSlider"
+            type="range"
+            min="0"
+            max="0"
+            value="0"
+        >
+
+        <div id="fechaLabel">
+        </div>
+
+
+        <label for="opacitySlider">
+            Opacidad del raster
+        </label>
+
+        <input
+            id="opacitySlider"
+            type="range"
+            min="0"
+            max="1"
+            step="0.05"
+            value="0.75"
+        >
+
+
+        <div id="info">
+        </div>
+
+
+        <div class="legend">
+
+            <h3>Desplazamiento LOS</h3>
+
+            <div class="colorbar"></div>
+
+            <div class="legend-values">
+
+                <span>-6 cm</span>
+                <span>0</span>
+                <span>+4 cm</span>
+
+            </div>
+
+        </div>
+
+    </aside>
+
+
+    <main id="map">
+    </main>
+
+</div>
+
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script src="https://unpkg.com/georaster"></script>
+
+<script src="https://unpkg.com/georaster-layer-for-leaflet"></script>
+
+<script src="https://unpkg.com/chroma-js"></script>
+
+<script src="./js/app.js"></script>
+
+</body>
+
+</html>

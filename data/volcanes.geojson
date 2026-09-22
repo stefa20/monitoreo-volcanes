@@ -1,0 +1,19 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "el_aburrido",
+        "nombre": "El Aburrido"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -76.4576336,
+          8.3405883
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "id": "El_Aburrido",
+  "nombre": "El Aburrido",
+  "sensor": "SAOCOM",
+  "tecnica": "InSAR - SBAS",
+  "procesamiento": "ISCE + MintPy",
+  "variable": "Desplazamiento LOS",
+  "unidad": "cm",
+  "geometria": "Ascendente 463",
+  "crs": "EPSG:4326",
+  "vmin_cm": -6,
+  "vmax_cm": 4
+}

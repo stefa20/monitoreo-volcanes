@@ -1,0 +1,73 @@
+html,
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: Arial, sans-serif;
+}
+
+#app {
+    display: flex;
+    height: 100vh;
+}
+
+#sidebar {
+    width: 300px;
+    padding: 20px;
+    box-sizing: border-box;
+    background: white;
+    overflow-y: auto;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.18);
+    z-index: 1000;
+}
+
+#sidebar h1 {
+    margin-top: 0;
+}
+
+#sidebar label {
+    display: block;
+    margin-top: 20px;
+    margin-bottom: 6px;
+    font-weight: bold;
+}
+
+#sidebar select,
+#sidebar input {
+    width: 100%;
+}
+
+#map {
+    flex: 1;
+}
+
+#fechaLabel {
+    margin-top: 6px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.legend {
+    margin-top: 30px;
+}
+
+.colorbar {
+    height: 16px;
+    border-radius: 3px;
+
+    background: linear-gradient(
+        to right,
+        #440154,
+        #3b528b,
+        #21918c,
+        #5ec962,
+        #fde725
+    );
+}
+
+.legend-values {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4px;
+    font-size: 12px;
+}

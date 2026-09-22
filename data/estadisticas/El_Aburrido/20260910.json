@@ -1,0 +1,40 @@
+{
+  "fecha": "20260910",
+
+  "minimo_cm": -5.140,
+  "maximo_cm": 3.136,
+
+  "promedio_cm": 0.328,
+  "mediana_cm": 0.621,
+
+  "desviacion_cm": 1.077,
+
+  "pixeles_validos": 6547,
+
+  "categorias": [
+    {
+      "categoria": "-6 a -4 cm",
+      "pixeles": 35
+    },
+    {
+      "categoria": "-4 a -2 cm",
+      "pixeles": 166
+    },
+    {
+      "categoria": "-2 a -1 cm",
+      "pixeles": 599
+    },
+    {
+      "categoria": "-1 a +1 cm",
+      "pixeles": 4070
+    },
+    {
+      "categoria": "+1 a +2 cm",
+      "pixeles": 1538
+    },
+    {
+      "categoria": "+2 a +4 cm",
+      "pixeles": 139
+    }
+  ]
+}
