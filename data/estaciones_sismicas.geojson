@@ -1,0 +1,20 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "EST001",
+        "nombre": "Estación 1",
+        "volcan_id": "el_aburrido"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -76.457,
+          8.341
+        ]
+      }
+    }
+  ]
+}

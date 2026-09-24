@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="es">
 
 <head>
@@ -11,12 +10,45 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Geoportal InSAR SAOCOM</title>
+    <title>
+        SAMA | Monitoreo volcanes de lodo
+    </title>
+
+
+    <!-- =====================================================
+         LEAFLET
+    ====================================================== -->
 
     <link
         rel="stylesheet"
         href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     >
+
+
+    <!-- =====================================================
+         FUENTE
+    ====================================================== -->
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+
+    <!-- =====================================================
+         CSS DEL GEOPORTAL
+    ====================================================== -->
 
     <link
         rel="stylesheet"
@@ -28,99 +60,518 @@
 
 <body>
 
-<div id="app">
 
-    <aside id="sidebar">
+    <!-- =====================================================
+         ENCABEZADO INSTITUCIONAL
+    ====================================================== -->
 
-        <h1>Monitoreo InSAR</h1>
+    <header class="institutional-header">
 
-        <p>SAOCOM · Desplazamiento LOS</p>
-
-
-        <label for="volcanSelect">
-            Volcán
-        </label>
-
-        <select id="volcanSelect">
-        </select>
+        <div class="institutional-inner">
 
 
-        <label for="fechaSelect">
-            Fecha
-        </label>
+            <!-- SAMA -->
 
-        <select id="fechaSelect">
-        </select>
-
-
-        <label for="fechaSlider">
-            Serie temporal
-        </label>
-
-        <input
-            id="fechaSlider"
-            type="range"
-            min="0"
-            max="0"
-            value="0"
-        >
-
-        <div id="fechaLabel">
-        </div>
+            <img
+                src="./assets/logos/sama.png"
+                alt="Sistema de Alerta y Monitoreo de Antioquia - SAMA"
+                class="logo-sama"
+            >
 
 
-        <label for="opacitySlider">
-            Opacidad del raster
-        </label>
+            <!-- EAFIT + DAGRAN + GOBERNACIÓN -->
 
-        <input
-            id="opacitySlider"
-            type="range"
-            min="0"
-            max="1"
-            step="0.05"
-            value="0.75"
-        >
+            <img
+                src="./assets/logos/instituciones.png"
+                alt="Universidad EAFIT, DAGRAN y Gobernación de Antioquia"
+                class="logo-instituciones"
+            >
 
-
-        <div id="info">
-        </div>
-
-
-        <div class="legend">
-
-            <h3>Desplazamiento LOS</h3>
-
-            <div class="colorbar"></div>
-
-            <div class="legend-values">
-
-                <span>-6 cm</span>
-                <span>0</span>
-                <span>+4 cm</span>
-
-            </div>
 
         </div>
 
-    </aside>
+    </header>
 
 
-    <main id="map">
-    </main>
-
-</div>
+    <div class="institutional-blue-line"></div>
 
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<script src="https://unpkg.com/georaster"></script>
+    <!-- =====================================================
+         MAPA GENERAL
+    ====================================================== -->
 
-<script src="https://unpkg.com/georaster-layer-for-leaflet"></script>
+    <section id="home-view">
 
-<script src="https://unpkg.com/chroma-js"></script>
+        <main>
 
-<script src="./js/app.js"></script>
+
+            <!-- =================================================
+                 TÍTULO
+            ================================================== -->
+
+            <section class="hero-section">
+
+                <span class="hero-eyebrow">
+                    BOLETÍN DE MONITOREO
+                </span>
+
+                <h1>
+                    Boletín de Volcanes de Lodo
+                </h1>
+
+                <p class="hero-subtitle">
+                    Monitoreo satelital de cambios en la superficie
+                    mediante interferometría radar
+                </p>
+
+            </section>
+
+
+
+            <!-- =================================================
+                 INTRODUCCIÓN
+            ================================================== -->
+
+            <section class="intro">
+
+                <h2>
+                    Volcanes de lodo monitoreados
+                </h2>
+
+                <p>
+                    Seleccione un volcán en el mapa para consultar
+                    los resultados disponibles.
+                </p>
+
+            </section>
+
+
+
+            <!-- =================================================
+                 RESUMEN GENERAL
+            ================================================== -->
+
+            <section class="general-summary">
+
+                <div class="stats-grid home-stats-grid">
+
+
+                    <article class="stat-card">
+
+                        <span>
+                            Edificios volcánicos registrados
+                        </span>
+
+                        <strong id="stat-volcanic-buildings">
+                            26
+                        </strong>
+
+                    </article>
+
+
+
+                    <article class="stat-card">
+
+                        <span>
+                            Monitoreados por InSAR
+                        </span>
+
+                        <strong id="stat-insar">
+                            --
+                        </strong>
+
+                    </article>
+
+
+
+                    <article class="stat-card seismic-card">
+
+                        <span>
+                            Monitoreados con sísmica
+                        </span>
+
+                        <strong id="stat-seismic">
+                            --
+                        </strong>
+
+                    </article>
+
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =================================================
+                 MAPA GENERAL
+            ================================================== -->
+
+            <section class="map-section">
+
+                <div id="general-map"></div>
+
+            </section>
+
+
+        </main>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         BOLETÍN INDIVIDUAL
+    ====================================================== -->
+
+    <section
+        id="bulletin-view"
+        hidden
+    >
+
+
+        <div class="back-container">
+
+            <button
+                id="back-button"
+                type="button"
+            >
+                ← Volver al mapa general
+            </button>
+
+        </div>
+
+
+
+        <main>
+
+
+            <!-- =================================================
+                 TÍTULO DEL VOLCÁN
+            ================================================== -->
+
+            <section class="hero-section">
+
+                <span class="hero-eyebrow">
+                    BOLETÍN DE MONITOREO
+                </span>
+
+                <h1 id="volcano-name">
+                    Volcán de lodo
+                </h1>
+
+                <p class="hero-subtitle">
+                    Monitoreo satelital de cambios en la superficie
+                    mediante interferometría radar
+                </p>
+
+            </section>
+
+
+
+            <!-- =================================================
+                 FECHA
+            ================================================== -->
+
+            <section class="controls-section">
+
+                <label for="date-select">
+                    Fecha de observación:
+                </label>
+
+                <select id="date-select">
+                </select>
+
+            </section>
+
+
+
+            <!-- =================================================
+                 ESTADÍSTICAS INSAR
+            ================================================== -->
+
+            <section class="summary-section">
+
+                <h2>
+                    Resumen de la observación
+                </h2>
+
+                <div class="stats-grid">
+
+
+                    <article class="stat-card">
+
+                        <span>
+                            Cambio mínimo
+                        </span>
+
+                        <strong id="stat-min">
+                            --
+                        </strong>
+
+                    </article>
+
+
+
+                    <article class="stat-card">
+
+                        <span>
+                            Cambio máximo
+                        </span>
+
+                        <strong id="stat-max">
+                            --
+                        </strong>
+
+                    </article>
+
+
+
+                    <article class="stat-card">
+
+                        <span>
+                            Cambio promedio
+                        </span>
+
+                        <strong id="stat-mean">
+                            --
+                        </strong>
+
+                    </article>
+
+
+
+                    <article class="stat-card">
+
+                        <span>
+                            Píxeles analizados
+                        </span>
+
+                        <strong id="stat-pixels">
+                            --
+                        </strong>
+
+                    </article>
+
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =================================================
+                 MAPA INSAR
+            ================================================== -->
+
+            <section class="map-section">
+
+                <h2>
+                    Cambios observados en la superficie
+                </h2>
+
+                <p>
+                    El mapa presenta los cambios observados en la
+                    superficie mediante interferometría radar satelital.
+                </p>
+
+
+                <div id="bulletin-map"></div>
+
+
+
+                <!-- LEYENDA -->
+
+                <div class="map-legend">
+
+                    <h3>
+                        Cambio observado
+                    </h3>
+
+
+                    <div class="color-scale">
+
+                        <span style="background:#440154"></span>
+                        <span style="background:#482878"></span>
+                        <span style="background:#3E4989"></span>
+                        <span style="background:#31688E"></span>
+                        <span style="background:#26828E"></span>
+                        <span style="background:#1F9E89"></span>
+                        <span style="background:#6CCE59"></span>
+                        <span style="background:#B6DE2B"></span>
+                        <span style="background:#FDE725"></span>
+
+                    </div>
+
+
+                    <div class="legend-labels">
+
+                        <span>
+                            -6 cm
+                        </span>
+
+                        <span>
+                            0 cm
+                        </span>
+
+                        <span>
+                            +6 cm
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =================================================
+                 GRÁFICA
+            ================================================== -->
+
+            <section class="chart-section">
+
+                <h2>
+                    Distribución de los cambios observados
+                </h2>
+
+                <p>
+                    Distribución de los píxeles según el cambio
+                    observado en la superficie.
+                </p>
+
+                <div class="chart-container">
+
+                    <canvas id="distribution-chart"></canvas>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =================================================
+                 INFORMACIÓN TÉCNICA
+            ================================================== -->
+
+            <section class="technical-section">
+
+                <h2>
+                    Más información
+                </h2>
+
+
+                <div class="technical-grid">
+
+
+                    <div>
+
+                        <span>
+                            Satélite
+                        </span>
+
+                        <strong id="technical-sensor">
+                            --
+                        </strong>
+
+                    </div>
+
+
+
+                    <div>
+
+                        <span>
+                            Método
+                        </span>
+
+                        <strong id="technical-method">
+                            --
+                        </strong>
+
+                    </div>
+
+
+
+                    <div>
+
+                        <span>
+                            Procesamiento
+                        </span>
+
+                        <strong id="technical-processing">
+                            --
+                        </strong>
+
+                    </div>
+
+
+
+                    <div>
+
+                        <span>
+                            Geometría
+                        </span>
+
+                        <strong id="technical-geometry">
+                            --
+                        </strong>
+
+                    </div>
+
+
+                </div>
+
+
+                <p class="technical-note">
+
+                    La información presentada tiene carácter informativo
+                    y corresponde a observaciones satelitales de cambios
+                    en la superficie.
+
+                </p>
+
+            </section>
+
+
+        </main>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         LIBRERÍAS
+    ====================================================== -->
+
+    <script
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+    </script>
+
+    <script
+        src="https://unpkg.com/georaster">
+    </script>
+
+    <script
+        src="https://unpkg.com/georaster-layer-for-leaflet">
+    </script>
+
+    <script
+        src="https://cdn.jsdelivr.net/npm/chart.js">
+    </script>
+
+
+
+    <!-- =====================================================
+         APLICACIÓN
+    ====================================================== -->
+
+    <script
+        type="module"
+        src="./js/app.js">
+    </script>
+
 
 </body>
 

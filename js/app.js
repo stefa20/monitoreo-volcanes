@@ -1,485 +1,642 @@
-const VMIN_CM = -6;
-const VMAX_CM = 4;
+// ============================================================
+// app.js
+// Control principal del Geoportal
+// ============================================================
 
-const map = L.map("map").setView(
-    [7.5, -75.5],
-    8
-);
+
+import {
+
+    cargarCatalogo,
+
+    cargarVolcanesGeoJSON,
+
+    cargarEstacionesSismicas,
+
+    contarVolcanesInSAR,
+
+    contarVolcanesSismica,
+
+    buscarVolcan,
+
+    obtenerFechas,
+
+    buscarObservacion,
+
+    cargarMetadata,
+
+    cargarArea,
+
+    cargarFlujos,
+
+    cargarEstadisticas
+
+}
+from "./data.js";
+
+
+
+import {
+
+    crearMapaGeneral,
+
+    crearMapaBoletin
+
+}
+from "./map.js";
+
+
+
+import {
+
+    crearGraficaDistribucion
+
+}
+from "./charts.js";
+
 
 
 // ============================================================
-// MAPA BASE
+// CONFIGURACIÓN GENERAL
 // ============================================================
 
-L.tileLayer(
-    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    {
-        maxZoom: 19,
-        attribution: "&copy; OpenStreetMap"
-    }
-).addTo(map);
+const EDIFICIOS_VOLCANICOS_REGISTRADOS =
+    26;
+
 
 
 // ============================================================
-// VARIABLES
+// ELEMENTOS PRINCIPALES
 // ============================================================
 
-let catalogo = null;
-
-let rasterLayer = null;
-let flujoLayer = null;
-
-const volcanLayer = L.layerGroup().addTo(map);
+const homeView =
+    document.getElementById(
+        "home-view"
+    );
 
 
-const volcanSelect =
-    document.getElementById("volcanSelect");
+const bulletinView =
+    document.getElementById(
+        "bulletin-view"
+    );
 
-const fechaSelect =
-    document.getElementById("fechaSelect");
-
-const fechaSlider =
-    document.getElementById("fechaSlider");
-
-const fechaLabel =
-    document.getElementById("fechaLabel");
-
-const opacitySlider =
-    document.getElementById("opacitySlider");
 
 
 // ============================================================
-// INICIALIZACION
+// INICIO
 // ============================================================
 
 async function iniciar() {
 
-    const respuesta = await fetch(
-        "./data/catalog.json"
-    );
+    try {
 
-    catalogo = await respuesta.json();
-
-
-    for (const [id, volcan] of Object.entries(catalogo)) {
-
-        const option =
-            document.createElement("option");
-
-        option.value = id;
-        option.textContent = volcan.nombre;
-
-        volcanSelect.appendChild(option);
+        const parametros =
+            new URLSearchParams(
+                window.location.search
+            );
 
 
-        const marker = L.marker(
-            [volcan.lat, volcan.lon]
-        );
-
-        marker.bindPopup(
-            `<b>${volcan.nombre}</b>`
-        );
-
-        marker.on(
-            "click",
-            () => seleccionarVolcan(id)
-        );
-
-        marker.addTo(volcanLayer);
-    }
+        const volcanId =
+            parametros.get(
+                "volcan"
+            );
 
 
-    const primerVolcan =
-        Object.keys(catalogo)[0];
-
-    seleccionarVolcan(
-        primerVolcan
-    );
-}
+        const catalogo =
+            await cargarCatalogo();
 
 
-// ============================================================
-// SELECCIONAR VOLCAN
-// ============================================================
+        if (!volcanId) {
 
-async function seleccionarVolcan(id) {
+            await mostrarMapaGeneral(
+                catalogo
+            );
 
-    volcanSelect.value = id;
-
-    const volcan =
-        catalogo[id];
-
-
-    map.setView(
-        [volcan.lat, volcan.lon],
-        13
-    );
-
-
-    fechaSelect.innerHTML = "";
-
-
-    const rasters =
-        volcan.rasters.sort(
-            (a, b) =>
-                a.fecha.localeCompare(b.fecha)
-        );
-
-
-    rasters.forEach(
-        (raster, index) => {
-
-            const option =
-                document.createElement("option");
-
-            option.value = raster.fecha;
-
-            option.textContent =
-                formatearFecha(raster.fecha);
-
-            fechaSelect.appendChild(option);
+            return;
         }
-    );
 
 
-    fechaSlider.min = 0;
+        await mostrarBoletin(
+            catalogo,
+            volcanId
+        );
 
-    fechaSlider.max =
-        rasters.length - 1;
+    }
+    catch (error) {
 
-    fechaSlider.value =
-        rasters.length - 1;
-
-
-    const ultimaFecha =
-        rasters[
-            rasters.length - 1
-        ].fecha;
-
-
-    fechaSelect.value =
-        ultimaFecha;
-
-
-    await cargarFlujos(id);
-
-    await cargarRaster(
-        id,
-        ultimaFecha
-    );
+        console.error(
+            "Error al iniciar el Geoportal:",
+            error
+        );
+    }
 }
 
 
+
 // ============================================================
-// CARGAR RASTER
+// MAPA GENERAL
 // ============================================================
 
-async function cargarRaster(
-    volcanId,
-    fecha
+async function mostrarMapaGeneral(
+    catalogo
 ) {
 
-    if (rasterLayer) {
-
-        map.removeLayer(
-            rasterLayer
-        );
-    }
+    homeView.hidden =
+        false;
 
 
-    const volcan =
-        catalogo[volcanId];
+    bulletinView.hidden =
+        true;
 
 
-    const rasterInfo =
-        volcan.rasters.find(
-            item =>
-                item.fecha === fecha
-        );
+
+    const [
+        volcanes,
+        estaciones
+    ] =
+        await Promise.all([
+            cargarVolcanesGeoJSON(),
+            cargarEstacionesSismicas()
+        ]);
 
 
-    if (!rasterInfo) {
-        return;
-    }
 
+    // ========================================================
+    // TARJETAS
+    // ========================================================
 
-    fechaLabel.textContent =
-        formatearFecha(fecha);
-
-
-    const respuesta =
-        await fetch(
-            rasterInfo.url
-        );
-
-
-    const arrayBuffer =
-        await respuesta.arrayBuffer();
-
-
-    const georaster =
-        await parseGeoraster(
-            arrayBuffer
-        );
-
-
-    const escala =
-        chroma.scale("viridis");
-
-
-    const nodata =
-        georaster.noDataValue;
-
-
-    rasterLayer =
-        new GeoRasterLayer({
-
-            georaster: georaster,
-
-            opacity:
-                Number(
-                    opacitySlider.value
-                ),
-
-            resolution: 256,
-
-            pixelValuesToColorFn:
-                values => {
-
-                    const valor_m =
-                        values[0];
-
-
-                    if (
-                        valor_m === null ||
-                        valor_m === undefined ||
-                        Number.isNaN(valor_m) ||
-                        valor_m === nodata
-                    ) {
-                        return null;
-                    }
-
-
-                    // MintPy almacena displacement en m
-                    const valor_cm =
-                        valor_m * 100;
-
-
-                    let normalizado =
-                        (
-                            valor_cm
-                            - VMIN_CM
-                        )
-                        /
-                        (
-                            VMAX_CM
-                            - VMIN_CM
-                        );
-
-
-                    normalizado =
-                        Math.max(
-                            0,
-                            Math.min(
-                                1,
-                                normalizado
-                            )
-                        );
-
-
-                    return escala(
-                        normalizado
-                    ).hex();
-                }
-        });
-
-
-    rasterLayer.addTo(
-        map
+    colocarTexto(
+        "stat-volcanic-buildings",
+        EDIFICIOS_VOLCANICOS_REGISTRADOS
     );
 
 
-    map.fitBounds(
-        rasterLayer.getBounds()
+    colocarTexto(
+        "stat-insar",
+        contarVolcanesInSAR(
+            catalogo
+        )
+    );
+
+
+    colocarTexto(
+        "stat-seismic",
+        contarVolcanesSismica(
+            estaciones
+        )
+    );
+
+
+
+    // ========================================================
+    // MAPA
+    // ========================================================
+
+    crearMapaGeneral(
+
+        volcanes,
+
+        estaciones,
+
+        volcanId => {
+
+            window.location.href =
+                `?volcan=${encodeURIComponent(
+                    volcanId
+                )}`;
+        }
     );
 }
 
 
+
 // ============================================================
-// FLUJOS HISTORICOS
+// BOLETÍN
 // ============================================================
 
-async function cargarFlujos(
+async function mostrarBoletin(
+    catalogo,
     volcanId
 ) {
 
-    if (flujoLayer) {
+    const volcan =
+        buscarVolcan(
+            catalogo,
+            volcanId
+        );
 
-        map.removeLayer(
-            flujoLayer
+
+    if (!volcan) {
+
+        throw new Error(
+            `No existe el volcán ${volcanId}`
         );
     }
 
 
-    const url =
-        catalogo[
-            volcanId
-        ].flujos;
+
+    homeView.hidden =
+        true;
 
 
-    if (!url) {
-        return;
+    bulletinView.hidden =
+        false;
+
+
+
+    colocarTexto(
+        "volcano-name",
+        volcan.nombre
+    );
+
+
+
+    // ========================================================
+    // METADATA
+    // ========================================================
+
+    const metadata =
+        await cargarMetadata(
+            volcan
+        );
+
+
+    colocarTexto(
+        "technical-sensor",
+        metadata.sensor
+    );
+
+
+    colocarTexto(
+        "technical-method",
+        metadata.metodo
+    );
+
+
+    colocarTexto(
+        "technical-processing",
+        metadata.procesamiento
+    );
+
+
+    colocarTexto(
+        "technical-geometry",
+        metadata.geometria
+    );
+
+
+
+    // ========================================================
+    // FECHAS
+    // ========================================================
+
+    const fechas =
+        obtenerFechas(
+            volcan
+        );
+
+
+    if (fechas.length === 0) {
+
+        throw new Error(
+            "El volcán no tiene fechas disponibles."
+        );
     }
 
 
-    const respuesta =
-        await fetch(url);
+
+    const selector =
+        document.getElementById(
+            "date-select"
+        );
 
 
-    const geojson =
-        await respuesta.json();
+    selector.innerHTML =
+        "";
 
 
-    flujoLayer =
-        L.geoJSON(
-            geojson,
-            {
-                style: {
-                    color: "#e53935",
-                    weight: 2,
-                    fillOpacity: 0.12
-                }
+
+    fechas.forEach(
+        observacion => {
+
+            const opcion =
+                document.createElement(
+                    "option"
+                );
+
+
+            opcion.value =
+                observacion.fecha;
+
+
+            opcion.textContent =
+                formatearFecha(
+                    observacion.fecha
+                );
+
+
+            selector.appendChild(
+                opcion
+            );
+        }
+    );
+
+
+
+    // ========================================================
+    // FECHA DESDE URL
+    // ========================================================
+
+    const parametros =
+        new URLSearchParams(
+            window.location.search
+        );
+
+
+    const fechaURL =
+        parametros.get(
+            "fecha"
+        );
+
+
+    const observacionInicial =
+        buscarObservacion(
+            volcan,
+            fechaURL
+        ) ||
+        fechas[0];
+
+
+    selector.value =
+        observacionInicial.fecha;
+
+
+
+    // ========================================================
+    // CAPAS VECTORIALES
+    // ========================================================
+
+    const [
+        area,
+        flujos
+    ] =
+        await Promise.all([
+            cargarArea(
+                volcan
+            ),
+            cargarFlujos(
+                volcan
+            )
+        ]);
+
+
+
+    await cargarObservacion(
+        observacionInicial,
+        area,
+        flujos
+    );
+
+
+
+    // ========================================================
+    // CAMBIO DE FECHA
+    // ========================================================
+
+    selector.addEventListener(
+        "change",
+        async event => {
+
+            const fecha =
+                event.target.value;
+
+
+            const observacion =
+                buscarObservacion(
+                    volcan,
+                    fecha
+                );
+
+
+            if (!observacion) {
+                return;
+            }
+
+
+
+            const nuevaURL =
+                new URL(
+                    window.location
+                );
+
+
+            nuevaURL.searchParams.set(
+                "volcan",
+                volcan.id
+            );
+
+
+            nuevaURL.searchParams.set(
+                "fecha",
+                fecha
+            );
+
+
+            window.history.replaceState(
+                {},
+                "",
+                nuevaURL
+            );
+
+
+            await cargarObservacion(
+                observacion,
+                area,
+                flujos
+            );
+        }
+    );
+
+
+
+    // ========================================================
+    // VOLVER
+    // ========================================================
+
+    document
+        .getElementById(
+            "back-button"
+        )
+        .addEventListener(
+            "click",
+            () => {
+
+                window.location.href =
+                    window.location.pathname;
             }
         );
+}
 
 
-    flujoLayer.addTo(
-        map
+
+// ============================================================
+// CARGAR OBSERVACIÓN
+// ============================================================
+
+async function cargarObservacion(
+    observacion,
+    area,
+    flujos
+) {
+
+    console.log(
+        "Cargando observación:",
+        observacion.fecha
+    );
+
+
+
+    const estadisticas =
+        await cargarEstadisticas(
+            observacion
+        );
+
+
+
+    colocarTexto(
+        "stat-min",
+        formatoCm(
+            estadisticas.minimo_cm
+        )
+    );
+
+
+    colocarTexto(
+        "stat-max",
+        formatoCm(
+            estadisticas.maximo_cm
+        )
+    );
+
+
+    colocarTexto(
+        "stat-mean",
+        formatoCm(
+            estadisticas.promedio_cm
+        )
+    );
+
+
+    colocarTexto(
+        "stat-pixels",
+        Number(
+            estadisticas.pixeles_validos
+        ).toLocaleString(
+            "es-CO"
+        )
+    );
+
+
+
+    await crearMapaBoletin({
+
+        rasterUrl:
+            observacion.raster,
+
+        areaGeoJSON:
+            area,
+
+        flujosGeoJSON:
+            flujos
+
+    });
+
+
+
+    crearGraficaDistribucion(
+        "distribution-chart",
+        estadisticas
     );
 }
 
 
+
 // ============================================================
-// EVENTOS
+// UTILIDADES
 // ============================================================
 
-volcanSelect.addEventListener(
-    "change",
-    () => {
+function colocarTexto(
+    id,
+    valor
+) {
 
-        seleccionarVolcan(
-            volcanSelect.value
+    const elemento =
+        document.getElementById(
+            id
         );
+
+
+    if (elemento) {
+
+        elemento.textContent =
+            valor ?? "--";
     }
-);
+}
 
 
-fechaSelect.addEventListener(
-    "change",
-    () => {
 
-        const volcanId =
-            volcanSelect.value;
+function formatoCm(
+    valor
+) {
 
-        const fecha =
-            fechaSelect.value;
+    const numero =
+        Number(valor);
 
 
-        const rasters =
-            catalogo[
-                volcanId
-            ].rasters;
-
-
-        const index =
-            rasters.findIndex(
-                r =>
-                    r.fecha === fecha
-            );
-
-
-        fechaSlider.value =
-            index;
-
-
-        cargarRaster(
-            volcanId,
-            fecha
-        );
+    if (
+        !Number.isFinite(
+            numero
+        )
+    ) {
+        return "--";
     }
-);
 
 
-fechaSlider.addEventListener(
-    "input",
-    () => {
-
-        const volcanId =
-            volcanSelect.value;
+    const signo =
+        numero > 0
+            ? "+"
+            : "";
 
 
-        const rasters =
-            catalogo[
-                volcanId
-            ].rasters;
+    return (
+        `${signo}${numero.toFixed(2)} cm`
+    );
+}
 
 
-        const raster =
-            rasters[
-                Number(
-                    fechaSlider.value
-                )
-            ];
-
-
-        fechaSelect.value =
-            raster.fecha;
-
-
-        cargarRaster(
-            volcanId,
-            raster.fecha
-        );
-    }
-);
-
-
-opacitySlider.addEventListener(
-    "input",
-    () => {
-
-        if (rasterLayer) {
-
-            rasterLayer.setOpacity(
-                Number(
-                    opacitySlider.value
-                )
-            );
-        }
-    }
-);
-
-
-// ============================================================
-// FECHAS
-// ============================================================
 
 function formatearFecha(
     fecha
 ) {
 
+    if (
+        !fecha ||
+        fecha.length !== 8
+    ) {
+        return fecha;
+    }
+
+
     return (
-        fecha.slice(6, 8)
-        + "/"
-        + fecha.slice(4, 6)
-        + "/"
-        + fecha.slice(0, 4)
+        `${fecha.slice(6, 8)}/` +
+        `${fecha.slice(4, 6)}/` +
+        `${fecha.slice(0, 4)}`
     );
 }
 
 
+
 // ============================================================
-// INICIAR
+// EJECUTAR
 // ============================================================
 
 iniciar();

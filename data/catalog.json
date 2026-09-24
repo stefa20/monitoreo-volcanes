@@ -1,22 +1,22 @@
 {
+  "version": 1,
+
   "volcanes": [
     {
-      "id": "El_Aburrido",
+      "id": "el_aburrido",
       "nombre": "El Aburrido",
-      "lat": 8.3405883,
-      "lon": -76.4576336,
-      "sensor": "SAOCOM",
-      "geometria": "Ascendente 463",
+
+      "metadata": "./data/metadata/El_Aburrido.json",
+      "area": "./data/areas/El_Aburrido.geojson",
+      "flujos": "./data/flujos/El_Aburrido.geojson",
+
       "fechas": [
         {
           "fecha": "20260910",
           "raster": "./data/rasters/El_Aburrido/20260910.tif",
           "estadisticas": "./data/estadisticas/El_Aburrido/20260910.json"
         }
-      ],
-      "flujos": "./data/flujos/El_Aburrido.geojson",
-      "area_estudio": "./data/areas/El_Aburrido.geojson",
-      "metadata": "./data/metadata/El_Aburrido.json"
+      ]
     }
   ]
 }

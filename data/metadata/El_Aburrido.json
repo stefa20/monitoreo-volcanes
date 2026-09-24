@@ -1,13 +1,22 @@
 {
-  "id": "El_Aburrido",
+  "id": "el_aburrido",
   "nombre": "El Aburrido",
+
+  "descripcion": "Sitio de monitoreo de cambios en la superficie mediante observaciones satelitales.",
+
   "sensor": "SAOCOM",
-  "tecnica": "InSAR - SBAS",
+  "metodo": "InSAR",
   "procesamiento": "ISCE + MintPy",
-  "variable": "Desplazamiento LOS",
-  "unidad": "cm",
+
   "geometria": "Ascendente 463",
+
+  "variable_tecnica": "Desplazamiento LOS",
+  "variable_publica": "Cambio observado en la superficie",
+
+  "unidad_raster": "m",
+  "unidad_visualizacion": "cm",
+
   "crs": "EPSG:4326",
-  "vmin_cm": -6,
-  "vmax_cm": 4
+
+  "nota": "La información presentada tiene carácter informativo y corresponde a observaciones satelitales de cambios en la superficie."
 }
