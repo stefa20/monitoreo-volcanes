@@ -1,32 +1,19 @@
-// ============================================================
-// map.js
-// Mapas del Geoportal
-// ============================================================
-
-
 let mapaGeneral = null;
 let mapaBoletin = null;
 
-
-
-// ============================================================
-// MAPA BASE
-// ============================================================
-
 function agregarMapaBase(mapa) {
-
-    L.tileLayer(
+    const capaBase = L.tileLayer(
         "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
         {
             maxZoom: 19,
-
-            attribution:
-                "&copy; OpenStreetMap contributors"
+            attribution: "&copy; OpenStreetMap contributors"
         }
-    ).addTo(mapa);
+    );
+
+    capaBase.addTo(mapa);
+
+    return capaBase;
 }
-
-
 
 // ============================================================
 // MAPA GENERAL
@@ -37,648 +24,365 @@ export function crearMapaGeneral(
     estacionesGeoJSON,
     onVolcanClick
 ) {
-
-    const contenedor =
-        document.getElementById(
-            "general-map"
-        );
-
+    const contenedor = document.getElementById("general-map");
 
     if (!contenedor) {
-
-        throw new Error(
-            "No existe #general-map"
-        );
+        throw new Error("No existe #general-map");
     }
 
-
     if (mapaGeneral) {
-
         mapaGeneral.remove();
-
         mapaGeneral = null;
     }
 
-
-    mapaGeneral =
-        L.map(
-            "general-map",
-            {
-                zoomControl: true
-            }
-        );
-
-
-    agregarMapaBase(
-        mapaGeneral
+    mapaGeneral = L.map(
+        "general-map",
+        {
+            zoomControl: true
+        }
     );
 
+    const capaBase = agregarMapaBase(mapaGeneral);
 
+    const iconoVolcan = L.divIcon({
+        className: "volcano-marker-container",
+        html: '<div class="volcano-marker"></div>',
+        iconSize: [20, 18],
+        iconAnchor: [10, 9]
+    });
 
-    // ========================================================
-    // VOLCANES DE LODO
-    // ========================================================
-
-    const capaVolcanes =
-        L.geoJSON(
-            volcanesGeoJSON,
-            {
-
-                pointToLayer:
-                    function (
-                        feature,
-                        latlng
-                    ) {
-
-                        return L.circleMarker(
-                            latlng,
-                            {
-                                radius: 8,
-
-                                weight: 2,
-
-                                color:
-                                    "#ffffff",
-
-                                fillColor:
-                                    "#d95f02",
-
-                                fillOpacity:
-                                    1
-                            }
-                        );
-                    },
-
-
-                onEachFeature:
-                    function (
-                        feature,
-                        layer
-                    ) {
-
-                        const propiedades =
-                            feature.properties ||
-                            {};
-
-
-                        const nombre =
-                            propiedades.nombre ||
-                            "Volcán de lodo";
-
-
-                        const id =
-                            propiedades.id;
-
-
-                        layer.bindTooltip(
-                            nombre,
-                            {
-                                direction:
-                                    "top",
-
-                                offset:
-                                    [0, -7]
-                            }
-                        );
-
-
-                        layer.on(
-                            "click",
-                            function () {
-
-                                if (
-                                    id &&
-                                    typeof onVolcanClick ===
-                                    "function"
-                                ) {
-
-                                    onVolcanClick(
-                                        id
-                                    );
-                                }
-                            }
-                        );
+    const capaVolcanes = L.geoJSON(
+        volcanesGeoJSON,
+        {
+            pointToLayer: function (feature, latlng) {
+                return L.marker(
+                    latlng,
+                    {
+                        icon: iconoVolcan
                     }
+                );
+            },
 
+            onEachFeature: function (feature, layer) {
+                const propiedades = feature.properties || {};
+                const nombre = propiedades.nombre || "Volcán de lodo";
+                const id = propiedades.id;
+
+                layer.bindTooltip(
+                    nombre,
+                    {
+                        direction: "top",
+                        offset: [0, -8]
+                    }
+                );
+
+                layer.on(
+                    "click",
+                    function () {
+                        if (
+                            id &&
+                            typeof onVolcanClick === "function"
+                        ) {
+                            onVolcanClick(id);
+                        }
+                    }
+                );
             }
-        )
-        .addTo(
-            mapaGeneral
-        );
+        }
+    ).addTo(mapaGeneral);
 
-
-
-    // ========================================================
-    // ESTACIONES SÍSMICAS
-    // ========================================================
-
-    let capaEstaciones =
-        null;
-
+    let capaEstaciones = null;
 
     if (
         estacionesGeoJSON &&
-        Array.isArray(
-            estacionesGeoJSON.features
-        )
+        Array.isArray(estacionesGeoJSON.features)
     ) {
-
-        capaEstaciones =
-            L.geoJSON(
-                estacionesGeoJSON,
-                {
-
-                    pointToLayer:
-                        function (
-                            feature,
-                            latlng
-                        ) {
-
-                            return L.circleMarker(
-                                latlng,
-                                {
-                                    radius: 6,
-
-                                    weight: 2,
-
-                                    color:
-                                        "#ffffff",
-
-                                    fillColor:
-                                        "#176b87",
-
-                                    fillOpacity:
-                                        1
-                                }
-                            );
-                        },
-
-
-                    onEachFeature:
-                        function (
-                            feature,
-                            layer
-                        ) {
-
-                            const propiedades =
-                                feature.properties ||
-                                {};
-
-
-                            const nombre =
-                                propiedades.nombre ||
-                                "Estación sísmica";
-
-
-                            const codigo =
-                                propiedades.id ||
-                                "";
-
-
-                            layer.bindTooltip(
-                                nombre,
-                                {
-                                    direction:
-                                        "top"
-                                }
-                            );
-
-
-                            layer.bindPopup(
-                                `
-                                <strong>
-                                    ${nombre}
-                                </strong>
-                                <br>
-                                Estación sísmica
-                                ${
-                                    codigo
-                                        ? `<br>${codigo}`
-                                        : ""
-                                }
-                                `
-                            );
+        capaEstaciones = L.geoJSON(
+            estacionesGeoJSON,
+            {
+                pointToLayer: function (feature, latlng) {
+                    return L.circleMarker(
+                        latlng,
+                        {
+                            radius: 6,
+                            weight: 2,
+                            color: "#ffffff",
+                            fillColor: "#176b87",
+                            fillOpacity: 1
                         }
+                    );
+                },
 
+                onEachFeature: function (feature, layer) {
+                    const propiedades = feature.properties || {};
+                    const nombre =
+                        propiedades.nombre ||
+                        propiedades.id ||
+                        "Estación sísmica";
+
+                    layer.bindTooltip(
+                        nombre,
+                        {
+                            direction: "top"
+                        }
+                    );
+
+                    layer.bindPopup(
+                        `<strong>${nombre}</strong>`
+                    );
                 }
-            )
-            .addTo(
-                mapaGeneral
-            );
+            }
+        ).addTo(mapaGeneral);
     }
-
-
-
-    // ========================================================
-    // CONTROL DE CAPAS
-    // ========================================================
 
     const capasSuperpuestas = {
-
-        "Volcanes de lodo":
-            capaVolcanes
-
+        "Volcanes de lodo": capaVolcanes
     };
 
-
     if (capaEstaciones) {
-
-        capasSuperpuestas[
-            "Estaciones sísmicas"
-        ] =
-            capaEstaciones;
+        capasSuperpuestas["Estaciones sísmicas"] = capaEstaciones;
     }
 
-
     L.control.layers(
-        null,
+        {
+            "OpenStreetMap": capaBase
+        },
         capasSuperpuestas,
         {
-            collapsed: false
+            collapsed: true
         }
-    ).addTo(
-        mapaGeneral
-    );
+    ).addTo(mapaGeneral);
 
-
-
-    // ========================================================
-    // EXTENSIÓN DEL MAPA
-    // ========================================================
-
-    const bounds =
-        capaVolcanes.getBounds();
-
+    let limites = capaVolcanes.getBounds();
 
     if (
         capaEstaciones &&
-        capaEstaciones
-            .getBounds()
-            .isValid()
+        capaEstaciones.getBounds().isValid()
     ) {
-
-        bounds.extend(
-            capaEstaciones.getBounds()
-        );
+        if (limites.isValid()) {
+            limites.extend(capaEstaciones.getBounds());
+        } else {
+            limites = capaEstaciones.getBounds();
+        }
     }
 
-
-    if (bounds.isValid()) {
-
+    if (limites.isValid()) {
         mapaGeneral.fitBounds(
-            bounds,
+            limites,
             {
-                padding:
-                    [45, 45],
-
-                maxZoom:
-                    11
+                padding: [45, 45],
+                maxZoom: 11
             }
         );
-
     } else {
-
         mapaGeneral.setView(
             [7.0, -75.5],
             7
         );
     }
 
-
-    setTimeout(
-        () => {
-
-            mapaGeneral.invalidateSize();
-
-        },
+    window.setTimeout(
+        () => mapaGeneral?.invalidateSize(),
         120
     );
-
 
     return mapaGeneral;
 }
 
-
-
 // ============================================================
-// COLOR DEL RASTER INSAR
+// COLORES DE DEFORMACION
 // ============================================================
 
-function colorDesplazamiento(
-    valorMetros
-) {
-
+function colorDesplazamiento(valorMetros) {
     if (
         valorMetros === null ||
         valorMetros === undefined ||
-        !Number.isFinite(
-            valorMetros
-        )
+        !Number.isFinite(valorMetros)
     ) {
         return null;
     }
 
+    const cm = valorMetros * 100;
 
-    const cm =
-        valorMetros * 100;
+    if (cm < -6) return "#d73027";
+    if (cm < -4) return "#f46d43";
+    if (cm < -2) return "#fdae61";
+    if (cm < -1) return "#fee090";
+    if (cm < 1) return "#ffffbf";
+    if (cm < 2) return "#e0f3f8";
+    if (cm < 4) return "#abd9e9";
+    if (cm < 6) return "#74add1";
 
-
-    if (cm < -6) {
-        return "#440154";
-    }
-
-    if (cm < -4) {
-        return "#482878";
-    }
-
-    if (cm < -2) {
-        return "#3E4989";
-    }
-
-    if (cm < -1) {
-        return "#31688E";
-    }
-
-    if (cm < 1) {
-        return "#26828E";
-    }
-
-    if (cm < 2) {
-        return "#1F9E89";
-    }
-
-    if (cm < 4) {
-        return "#6CCE59";
-    }
-
-    if (cm < 6) {
-        return "#B6DE2B";
-    }
-
-
-    return "#FDE725";
+    return "#4575b4";
 }
 
-
-
 // ============================================================
-// MAPA DEL BOLETÍN
+// MAPA DEL BOLETIN
 // ============================================================
 
-export async function crearMapaBoletin({
-    rasterUrl,
-    areaGeoJSON = null,
-    flujosGeoJSON = null
-}) {
-
-    const contenedor =
-        document.getElementById(
-            "bulletin-map"
-        );
-
+export async function crearMapaBoletin(
+    observacion,
+    areaGeoJSON,
+    flujosGeoJSON
+) {
+    const contenedor = document.getElementById("bulletin-map");
 
     if (!contenedor) {
-
-        throw new Error(
-            "No existe #bulletin-map"
-        );
+        throw new Error("No existe #bulletin-map");
     }
 
-
     if (mapaBoletin) {
-
         mapaBoletin.remove();
-
         mapaBoletin = null;
     }
 
+    mapaBoletin = L.map(
+        "bulletin-map",
+        {
+            zoomControl: true
+        }
+    );
 
-    mapaBoletin =
-        L.map(
-            "bulletin-map"
+    const capaBase = agregarMapaBase(mapaBoletin);
+
+    mapaBoletin.createPane("rasterPane");
+    mapaBoletin.getPane("rasterPane").style.zIndex = 250;
+
+    const capasSuperpuestas = {};
+    let limitesFinales = null;
+
+    // --------------------------------------------------------
+    // Raster InSAR
+    // --------------------------------------------------------
+
+    if (observacion?.raster) {
+        const respuesta = await fetch(
+            observacion.raster,
+            {
+                cache: "no-store"
+            }
         );
-
-
-    agregarMapaBase(
-        mapaBoletin
-    );
-
-
-
-    // Pane del raster:
-    // queda debajo de los vectores
-
-    mapaBoletin.createPane(
-        "rasterPane"
-    );
-
-    mapaBoletin.getPane(
-        "rasterPane"
-    ).style.zIndex =
-        250;
-
-
-
-    const capasControl = {};
-
-
-
-    // ========================================================
-    // RASTER INSAR
-    // ========================================================
-
-    if (rasterUrl) {
-
-        const respuesta =
-            await fetch(
-                rasterUrl
-            );
-
 
         if (!respuesta.ok) {
-
             throw new Error(
-                `No se pudo cargar el raster ${rasterUrl}`
+                `No se pudo cargar el raster ${observacion.raster}. ` +
+                `HTTP ${respuesta.status}`
             );
         }
 
+        const arrayBuffer = await respuesta.arrayBuffer();
+        const georaster = await parseGeoraster(arrayBuffer);
 
-        const arrayBuffer =
-            await respuesta
-                .arrayBuffer();
-
-
-        const georaster =
-            await parseGeoraster(
-                arrayBuffer
-            );
-
-
-        const capaRaster =
-            new GeoRasterLayer(
-                {
-
-                    georaster:
-                        georaster,
-
-                    opacity:
-                        0.78,
-
-                    resolution:
-                        128,
-
-                    pane:
-                        "rasterPane",
-
-                    pixelValuesToColorFn:
-                        values => {
-
-                            const valor =
-                                values[0];
-
-
-                            return colorDesplazamiento(
-                                valor
-                            );
-                        }
+        const capaRaster = new GeoRasterLayer({
+            georaster: georaster,
+            opacity: 0.78,
+            resolution: 128,
+            pane: "rasterPane",
+            pixelValuesToColorFn: valores => {
+                if (!valores || valores.length === 0) {
+                    return null;
                 }
-            );
 
+                return colorDesplazamiento(
+                    Number(valores[0])
+                );
+            }
+        });
 
-        capaRaster.addTo(
-            mapaBoletin
-        );
+        capaRaster.addTo(mapaBoletin);
+        capasSuperpuestas["Deformación InSAR"] = capaRaster;
 
+        const limitesRaster = capaRaster.getBounds();
 
-        capasControl[
-            "Cambio observado"
-        ] =
-            capaRaster;
-
-
-        const rasterBounds =
-            capaRaster.getBounds();
-
-
-        if (rasterBounds) {
-
-            mapaBoletin.fitBounds(
-                rasterBounds,
-                {
-                    padding:
-                        [25, 25]
-                }
-            );
+        if (limitesRaster?.isValid()) {
+            limitesFinales = limitesRaster;
         }
     }
 
-
-
-    // ========================================================
-    // ÁREA DE ESTUDIO
-    // ========================================================
-
-    if (areaGeoJSON) {
-
-        const capaArea =
-            L.geoJSON(
-                areaGeoJSON,
-                {
-                    style: {
-                        color:
-                            "#333333",
-
-                        weight:
-                            2,
-
-                        dashArray:
-                            "6,6",
-
-                        fillOpacity:
-                            0.03
-                    }
-                }
-            )
-            .addTo(
-                mapaBoletin
-            );
-
-
-        capasControl[
-            "Área de estudio"
-        ] =
-            capaArea;
-    }
-
-
-
-    // ========================================================
-    // FLUJOS HISTÓRICOS
-    // ========================================================
-
-    if (flujosGeoJSON) {
-
-        const capaFlujos =
-            L.geoJSON(
-                flujosGeoJSON,
-                {
-                    style: {
-                        color:
-                            "#8b4513",
-
-                        weight:
-                            2,
-
-                        fillOpacity:
-                            0.14
-                    }
-                }
-            )
-            .addTo(
-                mapaBoletin
-            );
-
-
-        capasControl[
-            "Flujos históricos"
-        ] =
-            capaFlujos;
-    }
-
-
-
-    // ========================================================
-    // CONTROL
-    // ========================================================
+    // --------------------------------------------------------
+    // Area de estudio
+    // --------------------------------------------------------
 
     if (
-        Object.keys(
-            capasControl
-        ).length > 0
+        areaGeoJSON &&
+        Array.isArray(areaGeoJSON.features) &&
+        areaGeoJSON.features.length > 0
     ) {
-
-        L.control.layers(
-            null,
-            capasControl,
+        const capaArea = L.geoJSON(
+            areaGeoJSON,
             {
-                collapsed: false
+                style: {
+                    color: "#0b2e59",
+                    weight: 2,
+                    dashArray: "6 5",
+                    fillOpacity: 0.03
+                }
             }
-        ).addTo(
-            mapaBoletin
+        ).addTo(mapaBoletin);
+
+        capasSuperpuestas["Área de estudio"] = capaArea;
+
+        if (!limitesFinales && capaArea.getBounds().isValid()) {
+            limitesFinales = capaArea.getBounds();
+        }
+    }
+
+    // --------------------------------------------------------
+    // Flujos historicos
+    // --------------------------------------------------------
+
+    if (
+        flujosGeoJSON &&
+        Array.isArray(flujosGeoJSON.features) &&
+        flujosGeoJSON.features.length > 0
+    ) {
+        const capaFlujos = L.geoJSON(
+            flujosGeoJSON,
+            {
+                style: {
+                    color: "#8a4f2d",
+                    weight: 2,
+                    fillColor: "#b87545",
+                    fillOpacity: 0.15
+                }
+            }
+        ).addTo(mapaBoletin);
+
+        capasSuperpuestas["Flujos históricos"] = capaFlujos;
+
+        if (!limitesFinales && capaFlujos.getBounds().isValid()) {
+            limitesFinales = capaFlujos.getBounds();
+        }
+    }
+
+    L.control.layers(
+        {
+            "OpenStreetMap": capaBase
+        },
+        capasSuperpuestas,
+        {
+            collapsed: true
+        }
+    ).addTo(mapaBoletin);
+
+    if (limitesFinales?.isValid()) {
+        mapaBoletin.fitBounds(
+            limitesFinales,
+            {
+                padding: [25, 25]
+            }
+        );
+    } else {
+        mapaBoletin.setView(
+            [8.34, -76.45],
+            10
         );
     }
 
-
-
-    setTimeout(
-        () => {
-
-            mapaBoletin.invalidateSize();
-
-        },
-        150
+    window.setTimeout(
+        () => mapaBoletin?.invalidateSize(),
+        120
     );
-
 
     return mapaBoletin;
 }

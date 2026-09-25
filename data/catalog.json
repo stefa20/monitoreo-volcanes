@@ -1,20 +1,33 @@
 {
   "version": 1,
-
   "volcanes": [
     {
       "id": "el_aburrido",
       "nombre": "El Aburrido",
-
       "metadata": "./data/metadata/El_Aburrido.json",
       "area": "./data/areas/El_Aburrido.geojson",
       "flujos": "./data/flujos/El_Aburrido.geojson",
-
+      "serie": "./data/series/El_Aburrido.json",
       "fechas": [
         {
           "fecha": "20260910",
           "raster": "./data/rasters/El_Aburrido/20260910.tif",
           "estadisticas": "./data/estadisticas/El_Aburrido/20260910.json"
+        }
+      ]
+    },
+    {
+      "id": "las_changas",
+      "nombre": "Las Changas",
+      "metadata": "./data/metadata/Las_Changas.json",
+      "area": "./data/areas/Las_Changas.geojson",
+      "flujos": "./data/flujos/Las_Changas.geojson",
+      "serie": "./data/series/Las_Changas.json",
+      "fechas": [
+        {
+          "fecha": "20260911",
+          "raster": "./data/rasters/Las_Changas/20260911.tif",
+          "estadisticas": "./data/estadisticas/Las_Changas/20260911.json"
         }
       ]
     }

@@ -1,227 +1,155 @@
+let graficaEvolucion = null;
+
 // ============================================================
-// charts.js
-// Gráfica de distribución
+// SERIE TEMPORAL
 // ============================================================
 
-
-let graficaDistribucion =
-    null;
-
-
-
-const coloresPorCategoria = {
-
-    "< -6 cm":
-        "#440154",
-
-    "-6 a -4 cm":
-        "#482878",
-
-    "-4 a -2 cm":
-        "#3E4989",
-
-    "-2 a -1 cm":
-        "#31688E",
-
-    "-1 a +1 cm":
-        "#26828E",
-
-    "+1 a +2 cm":
-        "#1F9E89",
-
-    "+2 a +4 cm":
-        "#6CCE59",
-
-    "+4 a +6 cm":
-        "#B6DE2B",
-
-    "> +6 cm":
-        "#FDE725"
-
-};
-
-
-
-export function crearGraficaDistribucion(
+export function crearGraficaEvolucion(
     canvasId,
-    estadisticas
+    serie
 ) {
-
-    const canvas =
-        document.getElementById(
-            canvasId
-        );
-
+    const canvas = document.getElementById(canvasId);
 
     if (!canvas) {
-
-        console.warn(
-            `No existe #${canvasId}`
-        );
-
-        return;
+        console.error(`No existe el canvas #${canvasId}`);
+        return false;
     }
-
 
     if (
-        !estadisticas ||
-        !Array.isArray(
-            estadisticas.categorias
-        )
+        !Array.isArray(serie) ||
+        serie.length === 0
     ) {
-
-        console.warn(
-            "No hay categorías para graficar."
-        );
-
-        return;
+        console.error("La serie temporal está vacía.");
+        return false;
     }
 
+    const datos = serie
+        .map(
+            item => ({
+                fecha: String(item.fecha ?? ""),
+                promedio_cm: Number(item.promedio_cm)
+            })
+        )
+        .filter(
+            item =>
+                item.fecha.length === 8 &&
+                Number.isFinite(item.promedio_cm)
+        )
+        .sort(
+            (a, b) => a.fecha.localeCompare(b.fecha)
+        );
 
-
-    if (graficaDistribucion) {
-
-        graficaDistribucion
-            .destroy();
-
-        graficaDistribucion =
-            null;
+    if (datos.length === 0) {
+        console.error(
+            "La serie temporal no contiene puntos válidos para graficar."
+        );
+        return false;
     }
 
+    if (graficaEvolucion) {
+        graficaEvolucion.destroy();
+        graficaEvolucion = null;
+    }
 
+    const etiquetas = datos.map(
+        item => formatearFechaGrafica(item.fecha)
+    );
 
-    const etiquetas =
-        estadisticas.categorias.map(
-            categoria =>
-                categoria.nombre
-        );
+    const valores = datos.map(
+        item => item.promedio_cm
+    );
 
+    graficaEvolucion = new Chart(
+        canvas,
+        {
+            type: "line",
 
-    const valores =
-        estadisticas.categorias.map(
-            categoria =>
-                categoria.pixeles
-        );
+            data: {
+                labels: etiquetas,
+                datasets: [
+                    {
+                        label: "Deformación promedio acumulada (cm)",
+                        data: valores,
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        tension: 0.15,
+                        fill: false
+                    }
+                ]
+            },
 
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
 
-    const colores =
-        estadisticas.categorias.map(
-            categoria =>
-                coloresPorCategoria[
-                    categoria.nombre
-                ] ||
-                "#607286"
-        );
-
-
-
-    graficaDistribucion =
-        new Chart(
-            canvas,
-            {
-
-                type:
-                    "bar",
-
-
-                data: {
-
-                    labels:
-                        etiquetas,
-
-
-                    datasets: [
-                        {
-
-                            label:
-                                "Número de píxeles",
-
-                            data:
-                                valores,
-
-                            backgroundColor:
-                                colores,
-
-                            borderWidth:
-                                0
-                        }
-                    ]
+                interaction: {
+                    mode: "index",
+                    intersect: false
                 },
 
+                plugins: {
+                    legend: {
+                        display: true
+                    },
 
-                options: {
-
-                    responsive:
-                        true,
-
-                    maintainAspectRatio:
-                        false,
-
-
-                    plugins: {
-
-                        legend: {
-                            display:
-                                false
-                        },
-
-
-                        tooltip: {
-
-                            callbacks: {
-
-                                label:
-                                    function (
-                                        context
-                                    ) {
-
-                                        return (
-                                            `${Number(
-                                                context.raw
-                                            ).toLocaleString(
-                                                "es-CO"
-                                            )} píxeles`
-                                        );
-                                    }
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return (
+                                    "Deformación: " +
+                                    context.parsed.y.toFixed(2) +
+                                    " cm"
+                                );
                             }
+                        }
+                    }
+                },
+
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: "Fecha"
+                        },
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 0,
+                            autoSkip: true,
+                            maxTicksLimit: 12
                         }
                     },
 
-
-                    scales: {
-
-                        x: {
-
-                            title: {
-
-                                display:
-                                    true,
-
-                                text:
-                                    "Cambio observado en la superficie"
-                            }
+                    y: {
+                        title: {
+                            display: true,
+                            text: "Deformación promedio (cm)"
                         },
-
-
-                        y: {
-
-                            beginAtZero:
-                                true,
-
-                            title: {
-
-                                display:
-                                    true,
-
-                                text:
-                                    "Número de píxeles"
+                        ticks: {
+                            callback: function (valor) {
+                                return `${valor} cm`;
                             }
                         }
                     }
                 }
             }
-        );
+        }
+    );
 
+    return true;
+}
 
-    return graficaDistribucion;
+function formatearFechaGrafica(fecha) {
+    if (
+        !fecha ||
+        fecha.length !== 8
+    ) {
+        return fecha;
+    }
+
+    const anio = fecha.slice(0, 4);
+    const mes = fecha.slice(4, 6);
+    const dia = fecha.slice(6, 8);
+
+    return `${dia}/${mes}/${anio}`;
 }

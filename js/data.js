@@ -1,278 +1,103 @@
-// ============================================================
-// data.js
-// Lectura y manejo de datos
-// ============================================================
-
-
-export async function cargarJSON(ruta) {
-
-    const respuesta = await fetch(ruta);
-
+async function cargarJSON(ruta) {
+    const respuesta = await fetch(ruta, { cache: "no-store" });
 
     if (!respuesta.ok) {
-
         throw new Error(
             `No se pudo cargar ${ruta}. HTTP ${respuesta.status}`
         );
     }
 
-
     return await respuesta.json();
 }
 
-
-
-// ============================================================
-// CATÁLOGO
-// ============================================================
-
-export async function cargarCatalogo() {
-
-    return await cargarJSON(
-        "./data/catalog.json"
-    );
+export function cargarCatalogo() {
+    return cargarJSON("./data/catalog.json");
 }
 
-
-
-// ============================================================
-// VOLCANES
-// ============================================================
-
-export async function cargarVolcanesGeoJSON() {
-
-    return await cargarJSON(
-        "./data/volcanes.geojson"
-    );
+export function cargarVolcanesGeoJSON() {
+    return cargarJSON("./data/volcanes.geojson");
 }
 
-
-
-// ============================================================
-// ESTACIONES SÍSMICAS
-// ============================================================
-
-export async function cargarEstacionesSismicas() {
-
-    return await cargarJSON(
-        "./data/estaciones_sismicas.geojson"
-    );
+export function cargarEstacionesSismicas() {
+    return cargarJSON("./data/estaciones_sismicas.geojson");
 }
 
-
-
-// ============================================================
-// BUSCAR VOLCÁN
-// ============================================================
-
-export function buscarVolcan(
-    catalogo,
-    volcanId
-) {
-
-    if (
-        !catalogo ||
-        !Array.isArray(catalogo.volcanes)
-    ) {
-        return null;
-    }
-
-
+export function buscarVolcan(catalogo, volcanId) {
     return (
         catalogo.volcanes.find(
-            volcan =>
-                volcan.id === volcanId
+            volcan => volcan.id === volcanId
         ) || null
     );
 }
-
-
-
-// ============================================================
-// FECHAS
-// ============================================================
 
 export function obtenerFechas(volcan) {
-
-    if (
-        !volcan ||
-        !Array.isArray(volcan.fechas)
-    ) {
-        return [];
-    }
-
-
-    return [...volcan.fechas].sort(
-        (a, b) =>
-            b.fecha.localeCompare(
-                a.fecha
-            )
+    return [...(volcan.fechas || [])].sort(
+        (a, b) => b.fecha.localeCompare(a.fecha)
     );
 }
 
-
-
-// ============================================================
-// OBSERVACIÓN
-// ============================================================
-
-export function buscarObservacion(
-    volcan,
-    fecha
-) {
-
-    if (
-        !volcan ||
-        !Array.isArray(volcan.fechas)
-    ) {
-        return null;
-    }
-
-
+export function buscarObservacion(volcan, fecha) {
     return (
-        volcan.fechas.find(
-            observacion =>
-                observacion.fecha === fecha
+        (volcan.fechas || []).find(
+            observacion => observacion.fecha === fecha
         ) || null
     );
 }
 
+export function cargarMetadata(ruta) {
+    if (!ruta) {
+        return Promise.resolve({});
+    }
 
-
-// ============================================================
-// METADATA
-// ============================================================
-
-export async function cargarMetadata(
-    volcan
-) {
-
-    return await cargarJSON(
-        volcan.metadata
-    );
+    return cargarJSON(ruta);
 }
 
-
-
-// ============================================================
-// ÁREA
-// ============================================================
-
-export async function cargarArea(
-    volcan
-) {
-
+export function cargarArea(volcan) {
     if (!volcan.area) {
-        return null;
+        return Promise.resolve(null);
     }
 
-
-    return await cargarJSON(
-        volcan.area
-    );
+    return cargarJSON(volcan.area);
 }
 
-
-
-// ============================================================
-// FLUJOS
-// ============================================================
-
-export async function cargarFlujos(
-    volcan
-) {
-
+export function cargarFlujos(volcan) {
     if (!volcan.flujos) {
-        return null;
+        return Promise.resolve(null);
     }
 
-
-    return await cargarJSON(
-        volcan.flujos
-    );
+    return cargarJSON(volcan.flujos);
 }
 
-
-
-// ============================================================
-// ESTADÍSTICAS INSAR
-// ============================================================
-
-export async function cargarEstadisticas(
-    observacion
-) {
-
-    return await cargarJSON(
-        observacion.estadisticas
-    );
+export function cargarEstadisticas(ruta) {
+    return cargarJSON(ruta);
 }
 
-
-
-// ============================================================
-// CONTAR VOLCANES MONITOREADOS POR INSAR
-// ============================================================
-
-export function contarVolcanesInSAR(
-    catalogo
-) {
-
-    if (
-        !catalogo ||
-        !Array.isArray(catalogo.volcanes)
-    ) {
-        return 0;
+export function cargarSerieTemporal(ruta) {
+    if (!ruta) {
+        return Promise.resolve(null);
     }
 
+    return cargarJSON(ruta);
+}
 
-    return catalogo.volcanes.filter(
+export function contarVolcanesInSAR(catalogo) {
+    return (catalogo.volcanes || []).filter(
         volcan =>
             Array.isArray(volcan.fechas) &&
             volcan.fechas.length > 0
     ).length;
 }
 
+export function contarVolcanesSismica(estaciones) {
+    const ids = new Set();
 
+    for (const feature of estaciones?.features || []) {
+        const volcanId = feature.properties?.volcan_id;
 
-// ============================================================
-// CONTAR VOLCANES MONITOREADOS CON SÍSMICA
-// ============================================================
-
-export function contarVolcanesSismica(
-    estaciones
-) {
-
-    if (
-        !estaciones ||
-        !Array.isArray(
-            estaciones.features
-        )
-    ) {
-        return 0;
+        if (volcanId) {
+            ids.add(volcanId);
+        }
     }
 
-
-    const volcanes =
-        new Set();
-
-
-    estaciones.features.forEach(
-        feature => {
-
-            const volcanId =
-                feature.properties
-                    ?.volcan_id;
-
-
-            if (volcanId) {
-
-                volcanes.add(
-                    volcanId
-                );
-            }
-        }
-    );
-
-
-    return volcanes.size;
+    return ids.size;
 }
